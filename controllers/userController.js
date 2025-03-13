@@ -17,9 +17,10 @@ const connections = async (req, res) => {
 const details = async (req, res) => {
     try {
         const { usermail } = req.body;
-        const data = await UserModel.findOne({ usermail });
+        // console.log("usermail: ",usermail);
+        const data = await UserModel.findOne({ email:usermail });
 
-        console.log("data: ",data);
+        // console.log("data: ",data);
         
         res.status(200).json(data);
     } catch (error) {
