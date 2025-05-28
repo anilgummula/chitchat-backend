@@ -141,4 +141,17 @@ const reacts = async (req,res)=>{
 
 };
 
-module.exports = {connections, networks,details,request,reacts,notifications};
+const userInfo = async (req,res)=>{
+    try {
+        const {id:userid} = req.params;
+        
+        const userInfos = await UserModel.findOne({_id:userid});
+        res.status(200).json(userInfos);
+
+    } catch (error) {
+        console.log("error at userInfo: ",error.message);
+        res.status(500).json({error:"intenal server error"})
+    }
+}
+
+module.exports = {connections, networks,details,request,reacts,notifications,userInfo};
