@@ -4,11 +4,11 @@ const bodyParser = require('body-parser');
 
 require('dotenv').config();
 // require('./config/db.js');
-const connectDB = require("./libs/db.js");
+const connectDB = require("./src/libs/db.js");
 
-const authRouter = require('./routes/auth.route.js');
-const userRouter = require('./routes/user.route.js')
-const messageRouter = require('./routes/message.route.js')
+const authRouter = require('./src/routes/auth.route.js');
+const userRouter = require('./src/routes/user.route.js')
+const messageRouter = require('./src/routes/message.route.js')
 
 const app = express();
 const PORT = process.env.PORT || 3000;
