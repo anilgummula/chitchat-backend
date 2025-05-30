@@ -4,7 +4,7 @@ const {ensureAuthenticated} = require('../middlewares/auth');
 const router = require('express').Router();
 
 
-router.get('/networks',ensureAuthenticated,networks);
+router.post('/networks',ensureAuthenticated,networks);
 router.post('/details',ensureAuthenticated,details);
 router.post('/connections',ensureAuthenticated,connections);
 router.post('/request',ensureAuthenticated,request);

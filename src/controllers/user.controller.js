@@ -48,17 +48,46 @@ const details = async (req, res) => {
     }
 };
 
-const networks = async (req,res)=>{
-    try{
-        const networkdata = await UserModel.find();
+// const networks = async (req,res)=>{
+//     try{
+//         const {email} = req.body;
+//         const networkdata = await UserModel.find();
         
-        res.status(201).json(networkdata);
-    }
-    catch (error) {
-        res.status(500).json({ error: 'Failed to fetch networks 123' });
-    }
+//         res.status(201).json(networkdata);
+//     }
+//     catch (error) {
+//         res.status(500).json({ error: 'Failed to fetch networks 123' });
+//     }
 
+// };
+
+const networks = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        // 1. Find the logged-in user by email
+        const loggedInUser = await UserModel.findOne({ email });
+
+        if (!loggedInUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // 2. Get the user's connections
+        const connectionDoc = await ConModel.findOne({ id: loggedInUser._id });
+
+        // If connectionDoc doesn't exist, just exclude the logged-in user
+        const excludeIds = connectionDoc ? [loggedInUser._id, ...connectionDoc.cids] : [loggedInUser._id];
+
+        // 3. Fetch all users except the logged-in user and their connections
+        const networkData = await UserModel.find({ _id: { $nin: excludeIds } });
+
+        res.status(200).json(networkData);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch networks' });
+    }
 };
+
 const request = async (req,res)=>{
     try{
         const {rid,id,name,email} = req.body;
@@ -104,41 +133,56 @@ const notifications = async (req,res)=>{
 
 };
 
-const reacts = async (req,res)=>{
-    try{
-        const {rid,myid} = req.body;
-        console.log("reacts ids :  ",rid,myid);
-        
-        // const usermodel = await UserModel.findOne({id:myid});
-        // const useremail = usermodel.email; 
-        // console.log("useremail: ",useremail);
+// const reacts = async (req,res)=>{
+//     try{
+//         const {rid,myid} = req.body;
+//         console.log("reacts ids :  ",rid,myid);
 
-        const requestModel = await RequestModel.findOne({id:myid,rid:rid});
-        console.log("requestmodel :",requestModel);
+//         const requestModel = await RequestModel.findOne({id:myid,rid:rid});
+//         console.log("requestmodel :",requestModel);
         
-        requestModel.status=true;
-        // await requestModel.save();
-        requestModel.accept=true;
-        await requestModel.save();
+//         requestModel.status=true;
+//         requestModel.accept=true;
+//         await requestModel.save();
+//         await RequestModel.findOneAndDelete({id:myid,rid:rid})
         
-        
-        // const conModelCreate = new ConModel({id:myid,cids:[ ]});
-        // const conModelCreate2 = new ConModel({id:rid,cids:[ ]});
-        // await conModelCreate.save();
-        // await conModelCreate2.save();
 
-        await ConModel.updateOne({ id: myid },{ $addToSet: { cids: rid } });
-        await ConModel.updateOne({ id: rid },{ $addToSet: { cids: myid } });
-        // await conModel1.save();
-        // await conModel2.save();
-        console.log("success set true");
+
+//         await ConModel.updateOne({ id: myid },{ $addToSet: { cids: rid } });
+//         await ConModel.updateOne({ id: rid },{ $addToSet: { cids: myid } });
+
+//         console.log("success set true");
         
-        res.status(201).json({message:"successfully sent"});
+//         res.status(201).json({message:"successfully sent"});
+//     }
+//     catch (error) {
+//         res.status(500).json({ error: 'Failed to fetch networks 123' });
+//     }
+
+// };
+const reacts = async (req, res) => {
+    try {
+        const { rid, myid } = req.body;
+        console.log("Reacting to request from:", rid, "to:", myid);
+
+        // Find and delete the request in a single operation
+        const requestModel = await RequestModel.findOneAndDelete({ id: myid, rid: rid });
+
+        if (!requestModel) {
+            return res.status(404).json({ error: 'Request not found or already handled' });
+        }
+
+        // Add each user to the other's connections
+        await ConModel.updateOne({ id: myid }, { $addToSet: { cids: rid } }, { upsert: true });
+        await ConModel.updateOne({ id: rid }, { $addToSet: { cids: myid } }, { upsert: true });
+
+        console.log("Connection established and request deleted");
+
+        res.status(201).json({ message: "Successfully connected and request deleted" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to react to request' });
     }
-    catch (error) {
-        res.status(500).json({ error: 'Failed to fetch networks 123' });
-    }
-
 };
 
 const userInfo = async (req,res)=>{
