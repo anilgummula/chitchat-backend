@@ -76,7 +76,7 @@ io.on("connection", (socket) => {
 app.set("io", io);
 app.set("onlineUsers", onlineUsers);
 
-app.listen(PORT,()=>{
+server.listen(PORT,()=>{
     console.log('server running at port: ',PORT); 
     connectDB();
 })
