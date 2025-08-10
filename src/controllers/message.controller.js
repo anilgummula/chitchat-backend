@@ -59,15 +59,38 @@ const sendMessage = async (req,res)=>{
         const io = req.app.get("io");
         const onlineUsers = req.app.get("onlineUsers");
 
+
+
         const receiverSocketId = onlineUsers.get(receiverId.toString());
+        const senderSocketId = onlineUsers.get(senderId.toString());
+
+        const messageData = {
+        senderId,
+        text,
+        image: imageUrl,
+        createdAt: new Date(),
+        };
+
+        // send to receiver
         if (receiverSocketId) {
-        io.to(receiverSocketId).emit("getMessage", {
-            senderId,
-            text,
-            image: imageUrl,
-            createdAt: new Date()
-        });
+        io.to(receiverSocketId).emit("getMessage", messageData);
         }
+
+        // send to sender (so it appears instantly without reload)
+        if (senderSocketId) {
+        io.to(senderSocketId).emit("getMessage", messageData);
+        }
+
+
+        // const receiverSocketId = onlineUsers.get(receiverId.toString());
+        // if (receiverSocketId) {
+        // io.to(receiverSocketId).emit("getMessage", {
+        //     senderId,
+        //     text,
+        //     image: imageUrl,
+        //     createdAt: new Date()
+        // });
+        // }
 
         res.status(201).json(newMessage);
     } catch (error) {
