@@ -10,20 +10,20 @@ const connections = async (req, res) => {
         const { email } = req.body;
         const userModel = await UserModel.findOne({email:email});
         const userId = userModel._id;
-        console.log("userid: ",userId);
+        // console.log("userid: ",userId);
         
         const cons = await ConModel.findOne({ id:userId });
-        console.log("conn: ", cons);
+        // console.log("conn: ", cons);
         // const cids = cons.cids;
 
         if (!cons || !cons.cids || cons.cids.length === 0) {
             return res.status(200).json({ message: "No connections", data: [] });
         }
 
-        // If cids is an array of userIds
-        let conUserInfo = await UserModel.find({ _id: { $in: cons.cids } });
+        // cids is array of userIds
+        let conUserInfo = await UserModel.find({ _id: { $in: cons.cids } });//in function
 
-        // const conUserInfo = await UserModel.findOne({_id:cids})
+        // const conUserInfo = await UserModel.findOne({_id:cids})// not works because cids is not a single value
         console.log("conn id info at index : ",conUserInfo);
         
         
@@ -33,6 +33,8 @@ const connections = async (req, res) => {
         res.status(500).json({ error: "Failed to fetch connections" });
     }
 };
+
+
 
 const details = async (req, res) => {
     try {
@@ -65,21 +67,18 @@ const networks = async (req, res) => {
     try {
         const { email } = req.body;
 
-        // 1. Find the logged-in user by email
         const loggedInUser = await UserModel.findOne({ email });
 
         if (!loggedInUser) {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // 2. Get the user's connections
-        const connectionDoc = await ConModel.findOne({ id: loggedInUser._id });
+        // user id and already connected ids are excluded
+        const connectionsList = await ConModel.findOne({ id: loggedInUser._id });
+        const excludeIds = connectionsList ? [loggedInUser._id, ...connectionsList.cids] : [loggedInUser._id];
 
-        // If connectionDoc doesn't exist, just exclude the logged-in user
-        const excludeIds = connectionDoc ? [loggedInUser._id, ...connectionDoc.cids] : [loggedInUser._id];
-
-        // 3. Fetch all users except the logged-in user and their connections
-        const networkData = await UserModel.find({ _id: { $nin: excludeIds } });
+        // only sends not coonected ids
+        const networkData = await UserModel.find({ _id: { $nin: excludeIds } });// not in func
 
         res.status(200).json(networkData);
     } catch (error) {
@@ -106,10 +105,8 @@ const request = async (req,res)=>{
 const notifications = async (req,res)=>{
     try{
         const id = req.body.id;
-   // Convert string ID to ObjectId
         // const objectId = new mongoose.Types.ObjectId(id);
 
-        // Query using correct ObjectId type
         console.log("id sent to backend:",id);
         
         let filteredRequests = [];

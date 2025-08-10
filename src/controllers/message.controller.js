@@ -55,6 +55,19 @@ const sendMessage = async (req,res)=>{
         await newMessage.save();
 
         //scoket.io later
+        // Emit via Socket.IO
+        const io = req.app.get("io");
+        const onlineUsers = req.app.get("onlineUsers");
+
+        const receiverSocketId = onlineUsers.get(receiverId.toString());
+        if (receiverSocketId) {
+        io.to(receiverSocketId).emit("getMessage", {
+            senderId,
+            text,
+            image: imageUrl,
+            createdAt: new Date()
+        });
+        }
 
         res.status(201).json(newMessage);
     } catch (error) {
